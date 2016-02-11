@@ -1,0 +1,6 @@
+---
+# Virtualenvs home directory
+virtualenv_dir: /var/virtualenvs
+
+# Plesk server group name
+plesk_server_group: psaserv

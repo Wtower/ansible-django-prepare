@@ -1,0 +1,42 @@
+---
+# Prepare the launch of a Django app on a Plesk managed server
+#
+# Extra variables:
+# - ansible_user_id
+# - mysql_pass
+
+- name: Install packages
+  apt: name="{{ item }}" state=present
+  become: true
+  with_items:
+    - python-pip
+    - python-dev
+    - build-essential
+    - python-django
+    - python-mysqldb
+    - libmysqlclient-dev
+    - libapache2-mod-wsgi
+    - virtualenvwrapper
+    - libjpeg-dev
+    - python3-dev
+
+- name: Upgrade pip
+  pip: name=pip state=latest
+  become: true
+
+- name: Import timezone data
+  shell: mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u "{{ ansible_user_id }}" -p "{{ mysql_pass }}" mysql
+  when: mysql_pass is defined
+
+- name: Create virtualenvs directory
+  file: name="{{ virtualenv_dir }}" group="{{ plesk_server_group }}" mode="g+w" state=directory
+  become: true
+  when: virtualenv_dir
+
+- name: Update bash profile
+  blockinfile:
+    dest: ~/.bash_profile
+    block: |
+      export WORKON_HOME={{ virtualenv_dir }}
+      source /usr/local/bin/virtualenvwrapper.sh
+  when: virtualenv_dir

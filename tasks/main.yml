@@ -25,18 +25,27 @@
   become: true
 
 - name: Import timezone data
-  shell: mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u "{{ ansible_user_id }}" -p "{{ mysql_pass }}" mysql
+  shell: mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user={{ ansible_user_id }} --password={{ mysql_pass }} mysql
   when: mysql_pass is defined
+  register: tz_output
+  failed_when: '"command not found" in tz_output.stderr or "error" in tz_output.stderr | lower'
 
 - name: Create virtualenvs directory
-  file: name="{{ virtualenv_dir }}" group="{{ plesk_server_group }}" mode="g+w" state=directory
+  file: name={{ virtualenv_dir }} group={{ plesk_server_group }} mode=g+w state=directory
   become: true
-  when: virtualenv_dir
+  when: 'virtualenv_dir != ""'
+
+- name: Find virtualenvwrapper script
+  find: paths="/usr" recurse=yes patterns="virtualenvwrapper.sh"
+  register: venvwrapper
+  failed_when: venvwrapper.matched | int == 0
+  when: 'virtualenv_dir != ""'
 
 - name: Update bash profile
   blockinfile:
     dest: ~/.bash_profile
+    create: yes
     block: |
       export WORKON_HOME={{ virtualenv_dir }}
-      source /usr/local/bin/virtualenvwrapper.sh
-  when: virtualenv_dir
+      source {{ venvwrapper.files[0].path }}
+  when: 'virtualenv_dir != ""'

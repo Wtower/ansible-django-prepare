@@ -74,3 +74,8 @@ Specify variables:
       roles:
         - role: django-prepare
           virtualenv_dir: ~/.virtualenvs
+
+Galaxy
+------
+
+See more roles regarding Django on https://galaxy.ansible.com/Wtower/
